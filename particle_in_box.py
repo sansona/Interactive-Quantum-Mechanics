@@ -12,41 +12,54 @@ prob_density = phi**2
 phi_source = ColumnDataSource(data=dict(x=x, y=phi))
 prob_source = ColumnDataSource(data=dict(x=x, y=prob_density))
 
-plot = figure(y_range=(-3, 3), plot_width=750, plot_height=750)
-plot.xaxis.axis_label = 'x'
-plot.xaxis.axis_label_text_font_size = '24pt'
-plot.line('x', 'y', source=phi_source, line_width=6,
-          line_alpha=0.6, legend='Phi')
-plot.line('x', 'y', source=prob_source,
-          color='red', line_width=6, line_alpha=0.6,
-          legend='Probability density')
-plot.legend.location = 'top_left'
-plot.legend.click_policy = 'hide'
+# -----------------------------------------------------------------------------
 
-n_callback = CustomJS(args=dict(
-    source=phi_source, source2=prob_source),
-    code="""
-    var data = source.data;
-    var n = cb_obj.value
-    var L = 1
-    var x = data['x']
-    var phi = data['y']
-    for (var i = 0; i < x.length; i++) {
-        phi[i] = Math.sqrt(2/L)*Math.sin((n*3.14*x[i])/L);
-    }
-    var data2 = source2.data
-    var prob = data2['y']
-    for (var i = 0; i < x.length; i++) {
-        prob[i] = Math.pow(Math.sqrt(2/L)*Math.sin((n*3.14*x[i])/L), 2);
-    }
-    source.change.emit();
-""")
 
-n_slider = Slider(start=1, end=100, value=1, step=1,
-                  title='n', callback=n_callback)
+def generate_plot_obj(phi_col=phi_source, prob_col=prob_source, size=750):
+    plot = figure(y_range=(-3, 3), plot_width=750, plot_height=750)
+    plot.xaxis.axis_label = 'x'
+    plot.xaxis.axis_label_text_font_size = '24pt'
+    plot.line('x', 'y', source=phi_col, line_width=6,
+              line_alpha=0.6, legend='Phi')
+    plot.line('x', 'y', source=prob_col,
+              color='red', line_width=6, line_alpha=0.6,
+              legend='Probability density')
+    plot.legend.location = 'top_left'
+    plot.legend.click_policy = 'hide'
 
-# ---------------------------------------------------------------
+    return plot
 
-layout = row(plot, widgetbox(n_slider))
+# -----------------------------------------------------------------------------
 
-show(layout)
+
+def generate_n_callback(phi_col=phi_source, prob_col=prob_source):
+    n_callback = CustomJS(args=dict(
+        source=phi_source, source2=prob_source),
+        code="""
+		var data = source.data;
+		var n = cb_obj.value
+		var L = 1
+		var x = data['x']
+		var phi = data['y']
+		for (var i = 0; i < x.length; i++) {
+			phi[i] = Math.sqrt(2/L)*Math.sin((n*Math.PI*x[i])/L);
+		}
+		var data2 = source2.data
+		var prob = data2['y']
+		for (var i = 0; i < x.length; i++) {
+			prob[i] = Math.pow(Math.sqrt(2/L)*Math.sin((n*Math.PI*x[i])/L), 2);
+		}
+		source.change.emit();
+	""")
+
+    slider = Slider(start=1, end=100, value=1, step=1,
+                    title='n', callback=n_callback)
+
+    return slider
+
+
+if __name__ == '__main__':
+    plot = generate_plot_obj()
+    n_slider = generate_n_callback()
+    layout = row(plot, widgetbox(n_slider))
+    show(layout)
