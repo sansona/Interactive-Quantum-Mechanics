@@ -17,14 +17,18 @@ def generate_oscillator_data(L=5):
 
     x = np.linspace(-L, L, 1000)
     y = x**2
+    x2 = np.linspace(-1, 10, 1000)
+    y2 = np.ones(1000)*(1-np.exp(-x2))**2
     E = 2
 
     harmonic_source = ColumnDataSource(data=dict(x=x, y=y))
+    anharmonic_source = ColumnDataSource(data=dict(x=x2, y=y2))
 
-    return harmonic_source
+    return harmonic_source, anharmonic_source
 
 
 # -----------------------------------------------------------------------------
+
 def generate_energy_levels(delta=2):
     '''
     generates dicts for energy levels of delta n 
@@ -72,8 +76,31 @@ def generate_harmonic_plot(harmonic_col, energy_source_list, y_range=(0, 25),
         else:
             plot.line('x', 'y', source=energy_source_list[i], line_width=3,
                       line_alpha=0.8, color='red')
+
+    positive_marker = BoxAnnotation(bottom=0, top=100,
+                                    fill_color='blue', fill_alpha=0.05)
+    plot.add_layout(positive_marker)
+
     plot.legend.location = 'top_left'
     plot.legend.click_policy = 'hide'
+
+    return plot
+# -----------------------------------------------------------------------------
+
+
+def generate_anharmonic_plot(anharmonic_col, y_range=(0, 2), L=5, size=750):
+    plot = figure(y_range=y_range, plot_width=size, plot_height=size,
+                  title='Energy levels of anharmonic oscillator')
+    plot.yaxis.axis_label = 'E'
+    plot.yaxis.axis_label_text_font_size = '24pt'
+    plot.xaxis.axis_label = 'r - r0'
+    plot.xaxis.axis_label_text_font_size = '24pt'
+    plot.line('x', 'y', source=anharmonic_col, line_width=6,
+              color='blue', line_alpha=1,
+              legend='Anharmonic oscillator potential')
+    positive_marker = BoxAnnotation(bottom=0, top=100,
+                                    fill_color='blue', fill_alpha=0.05)
+    plot.add_layout(positive_marker)
 
     return plot
 
@@ -81,11 +108,12 @@ def generate_harmonic_plot(harmonic_col, energy_source_list, y_range=(0, 25),
 
 
 def return_graphics():
-    harmonic_wave = generate_oscillator_data()
+    harmonic_wave, anharmonic_wave = generate_oscillator_data()
     energy_list = generate_energy_levels()
     n_plot = generate_harmonic_plot(harmonic_wave, energy_list)
-    layout = row(n_plot)
+    an_plot = generate_anharmonic_plot(anharmonic_wave)
 
+    layout = row(n_plot, an_plot)
     show(layout)
 
 # -----------------------------------------------------------------------------
